@@ -1,73 +1,73 @@
-# React + TypeScript + Vite
+# 🚀 AutoSOW
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Turn Meeting Transcripts into Actionable Statements of Work (SOWs) in Seconds.**
 
-Currently, two official plugins are available:
+AutoSOW is an AI-powered platform designed for agencies, consultants, and developers to eliminate the administrative overhead of drafting project proposals. By processing raw transcripts from Zoom, Teams, or Google Meet, AutoSOW automatically extracts deliverables, timelines, and budgets, fitting them into professional, standardized templates.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+![AutoSOW Logo](public/vite.svg)
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## ✨ Key Features
 
-## Expanding the ESLint configuration
+- **🧠 Intelligent Extraction:** Automatically separates "small talk" from core technical requirements and business goals.
+- **📄 Template Library:** Pre-formatted SOW structures for Software Development, IT Consulting, Marketing Retainers, and UX/UI Audits.
+- **🌓 Adaptive Theme:** Seamless Dark Mode/Light Mode support that mirrors your OS preferences and enhances late-night productivity.
+- **⚡ Dual-Pane Dashboard:** Paste your transcript on the left, watch your SOW materialize on the right in ready-to-copy Markdown.
+- **🛡️ JWT Security:** Robust authentication flow for managing your private lead captures and generated documents.
+- **🗓️ Microsoft Planner Integration:** Automated workflow to inject project tasks directly into your team's Planner buckets.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🛠️ Technology Stack
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- **Frontend:** React 19, TypeScript, Vite
+- **Styling:** Tailwind CSS 4, Lucide Icons
+- **Backend:** Node.js, Express (Mocked for Demo)
+- **Integration:** Microsoft Graph API (Planner automation)
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🚀 Getting Started
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Prerequisites
+- Node.js (v18+)
+- npm
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-username/autosow.git
+   cd autosow
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Run the development server:**
+   ```bash
+   npm run dev
+   ```
+
+Your dashboard will be available at `http://localhost:5173`.
+
+---
+
+## 📁 Project Resources
+
+- **[User Case Studies](USER_CASE_STUDIES.md):** Explore how different industries use AutoSOW to save 5+ hours per proposal.
+- **[Example Transcript](EXAMPLE_TRANSCRIPT.md):** A sample discovery call transcript to test the generation engine.
+- **[Planner Automation Script](populate_planner.cjs):** Custom Node.js utility for injecting tasks into Microsoft Planner.
+
+---
+
+## 👤 Author
+
+Developed by **Akshay** with **Antigravity** — building the future of agentic coding.
+
+---
+
+© 2026 AutoSOW Inc. All rights reserved.
