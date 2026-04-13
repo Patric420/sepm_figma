@@ -1,0 +1,26 @@
+[
+  {
+    "id": "usr_7x2fm7u",
+    "name": "Test User",
+    "email": "test@example.com",
+    "password": "$2b$08$fD4ldBdRjEyn7ICq4dIoCORhfwwXcTKi8foSuvEIU.SvssmtA.Oau",
+    "avatar": "https://i.pravatar.cc/150?u=test@example.com",
+    "createdAt": "2026-04-13T06:51:02.183Z"
+  },
+  {
+    "id": "usr_68iciti",
+    "name": "akshay",
+    "email": "akshay@gmail.com",
+    "password": "$2b$08$i9CQ/agy0Qwh8jR4.L.FMOaX4.e6fcOfiselOSsrp4C4UgKprpGjW",
+    "avatar": "https://i.pravatar.cc/150?u=akshay@gmail.com",
+    "createdAt": "2026-04-13T07:11:33.957Z"
+  },
+  {
+    "id": "usr_si5yx8l",
+    "name": "Test User",
+    "email": "test-unique-1776064854229@test.com",
+    "password": "$2b$08$Oi45GQnb8Khmqrieqhn0quIHhWDE3wa8SzSjfbnImOVdQJpglyTlS",
+    "avatar": "https://i.pravatar.cc/150?u=test-unique-1776064854229@test.com",
+    "createdAt": "2026-04-13T07:20:55.281Z"
+  }
+]
