@@ -1,3 +1,281 @@
 {
-  "byUserId": {}
+  "byUserId": {
+    "usr_68iciti": {
+      "metrics": {
+        "meetingsProcessed": 1,
+        "sowGenerated": 1,
+        "pendingReviews": 1,
+        "aiConfidenceScore": 95,
+        "deltas": {
+          "meetingsProcessed": 1,
+          "sowGenerated": 1,
+          "pendingReviews": 1,
+          "aiConfidenceScore": 2
+        }
+      },
+      "charts": {
+        "sowOverTime": [
+          {
+            "month": "Feb",
+            "value": 0
+          },
+          {
+            "month": "Mar",
+            "value": 0
+          },
+          {
+            "month": "Apr",
+            "value": 0
+          },
+          {
+            "month": "May",
+            "value": 0
+          },
+          {
+            "month": "Jun",
+            "value": 0
+          },
+          {
+            "month": "Jun",
+            "value": 1
+          }
+        ],
+        "monthlyPerformance": [
+          {
+            "month": "Feb",
+            "value": 0
+          },
+          {
+            "month": "Mar",
+            "value": 0
+          },
+          {
+            "month": "Apr",
+            "value": 0
+          },
+          {
+            "month": "May",
+            "value": 0
+          },
+          {
+            "month": "Jun",
+            "value": 0
+          },
+          {
+            "month": "Jun",
+            "value": 3
+          }
+        ]
+      },
+      "projects": [
+        {
+          "id": "prj_q893miyo",
+          "name": "Mobile App + Admin Dashboard Discovery - John Doe",
+          "company": "John Doe",
+          "status": "In Review",
+          "aiConfidence": 95,
+          "dateText": "15-Apr-2026",
+          "createdAt": "2026-04-15T08:05:00.279Z",
+          "transcript": " Sarah: Thanks everyone. The goal is to define scope for the first release of the customer app and internal admin portal.\n John: We need iOS and Android support, user login, profile management, and push notifications in phase one.\n Michael: On backend, we should use Node.js with a REST API and PostgreSQL database. We also need role-based access control for admins.\n Emily: From UX side, we’ll need onboarding flow, dashboard, order history, and settings screens. Accessibility should meet WCAG AA.\n John: Timeline target is around 12 weeks. Budget is about $85,000 for phase one.\n Sarah: We also need Stripe integration for payments and email notifications for receipts.\n Michael: Non-functional requirements: API response under 400ms for key endpoints, 99.9% uptime target, and audit logs for admin actions.\n Emily: Please include design system setup and reusable components so phase two can scale faster.\n John: For deliverables, I expect source code, API docs, deployment guide, test report, and handover session.\n Sarah: Risks include app store review delays, so let’s keep a 1-week buffer before launch.\n Michael: Agreed. We should split work into Discovery, Design, Development, QA, and Deployment phases.\n Sarah: Great, I’ll share this transcript for SOW generation.\n",
+          "participants": "Sarah Johnson (Product Manager), Michael Chen (Tech Lead), Emily Davis (UX Designer), John Doe (Client Sponsor)"
+        }
+      ],
+      "activities": [
+        {
+          "id": "act_cx67yq02",
+          "title": "SOW Generated",
+          "subtitle": "Mobile App + Admin Dashboard Discovery - John Doe",
+          "timestamp": "2026-04-15T08:05:11.333Z"
+        },
+        {
+          "id": "act_4utxvj5n",
+          "title": "Meeting Uploaded",
+          "subtitle": "Mobile App + Admin Dashboard Discovery - John Doe",
+          "timestamp": "2026-04-15T08:05:00.279Z"
+        }
+      ],
+      "processing": {
+        "completion": 100,
+        "pipeline": [
+          {
+            "name": "Transcript Analysis",
+            "status": "completed"
+          },
+          {
+            "name": "Image Recognition",
+            "status": "completed"
+          },
+          {
+            "name": "Requirement Extraction",
+            "status": "completed"
+          },
+          {
+            "name": "Scope Identification",
+            "status": "completed"
+          },
+          {
+            "name": "SOW Generation",
+            "status": "completed"
+          }
+        ],
+        "insights": {
+          "extractedRequirements": [
+            "Node.js Backend Systems",
+            "RESTful API Integration",
+            "UI/UX Design & Wireframing",
+            "Database Schema Design",
+            "Quality Assurance & Testing"
+          ],
+          "keyStakeholders": [
+            "akshay"
+          ],
+          "suggestedDeliverables": [
+            "Node.js Backend Systems",
+            "RESTful API Integration",
+            "UI/UX Design & Wireframing",
+            "Database Schema Design"
+          ],
+          "timelineEstimates": [
+            "Phase 1: Discovery - 12 weeks",
+            "Phase 2: Build - 6 weeks",
+            "Phase 3: QA - 2 weeks"
+          ]
+        }
+      },
+      "generatedSows": [
+        {
+          "id": "sow_kxz9q1u9",
+          "title": "Mobile App + Admin Dashboard Discovery - John Doe",
+          "content": "# Statement of Work (SOW)\n\n**Date Generated**: 15 Apr 2026\n**Prepared By**: AutoSOW Intelligent Agent\n**Status**: Draft for Review\n\n---\n\n## 1. Project Overview\nThis Statement of Work outlines delivery for:\n**Technical Implementation**\n\n## 2. Scope of Work & Deliverables\n- Node.js Backend Systems\n- RESTful API Integration\n- UI/UX Design & Wireframing\n- Database Schema Design\n- Quality Assurance & Testing\n\n## 3. Financials & Timeline\n- **Total Investment**: $85,000\n- **Project Duration**: 12 weeks\n- **Milestone**: Beta release at 75% of project timeline.\n\n## 4. Technical Constraints\n- Integrate with existing stack and API constraints.\n- Provide technical documentation.\n- Deliver responsive UX across modern browsers.\n\n## 5. Acceptance Criteria\n- Deliverables must pass client review.\n- Performance score target: 90+.\n- Beta feedback incorporated before final sign-off.\n\n---\n*This document was automatically generated by AutoSOW based on meeting transcripts.*",
+          "createdAt": "2026-04-15T08:05:11.333Z"
+        }
+      ],
+      "templates": {
+        "stats": {
+          "total": 6,
+          "custom": 2,
+          "recentlyUsed": 2
+        },
+        "popular": [
+          {
+            "id": "tpl_en1laxtg",
+            "name": "Software Development SOW",
+            "description": "Comprehensive template for custom software development projects including web and mobile applications.",
+            "sections": 8,
+            "lastUsedText": "2 days ago",
+            "popular": true
+          },
+          {
+            "id": "tpl_rp35rjai",
+            "name": "Consulting Project SOW",
+            "description": "Professional services template for consulting engagements and advisory services.",
+            "sections": 7,
+            "lastUsedText": "1 week ago",
+            "popular": true
+          }
+        ],
+        "all": [
+          {
+            "id": "tpl_phx7kn9n",
+            "name": "Software Development SOW",
+            "description": "Comprehensive template for custom software development projects including web and mobile applications.",
+            "sections": 8,
+            "lastUsedText": "2 days ago",
+            "popular": true
+          },
+          {
+            "id": "tpl_z6gnj79d",
+            "name": "Consulting Project SOW",
+            "description": "Professional services template for consulting engagements and advisory services.",
+            "sections": 7,
+            "lastUsedText": "1 week ago",
+            "popular": true
+          },
+          {
+            "id": "tpl_3z9nhfdv",
+            "name": "Implementation SOW",
+            "description": "Technical implementation template for deployments, integrations, and infrastructure.",
+            "sections": 9,
+            "lastUsedText": "2 weeks ago",
+            "popular": false
+          },
+          {
+            "id": "tpl_u7p6cxe8",
+            "name": "UI/UX Design SOW",
+            "description": "Creative services template for design projects and user research initiatives.",
+            "sections": 6,
+            "lastUsedText": "3 days ago",
+            "popular": false
+          },
+          {
+            "id": "tpl_l3jh450k",
+            "name": "Data Analytics SOW",
+            "description": "Data science and analytics template for BI implementations and reporting projects.",
+            "sections": 7,
+            "lastUsedText": "1 month ago",
+            "popular": false
+          },
+          {
+            "id": "tpl_580gi452",
+            "name": "Cloud Migration SOW",
+            "description": "Infrastructure template for cloud migration projects and DevOps implementations.",
+            "sections": 8,
+            "lastUsedText": "5 days ago",
+            "popular": false
+          }
+        ]
+      },
+      "collaboration": {
+        "documents": [
+          {
+            "id": "prj_q893miyo",
+            "name": "Mobile App + Admin Dashboard Discovery - John Doe",
+            "status": "In Review",
+            "comments": 1,
+            "collaborators": 1,
+            "highlighted": 1,
+            "timestamp": "2026-04-15T08:05:00.279Z"
+          }
+        ],
+        "comments": [
+          {
+            "id": "cmt_p4591sxc",
+            "author": "akshay",
+            "role": "Project Lead",
+            "message": "Initial SOW draft generated from latest meeting transcript.",
+            "resolved": true,
+            "highlighted": true,
+            "timestamp": "2026-04-15T08:05:11.333Z"
+          }
+        ],
+        "teamMembers": [
+          {
+            "id": "usr_mm4wntnr",
+            "name": "akshay",
+            "role": "Project Lead",
+            "online": true
+          },
+          {
+            "id": "usr_c44fnq9p",
+            "name": "Sarah Johnson",
+            "role": "Product Manager",
+            "online": true
+          },
+          {
+            "id": "usr_04pkh6o2",
+            "name": "Michael Chen",
+            "role": "Technical Lead",
+            "online": true
+          }
+        ],
+        "summary": {
+          "totalComments": 1,
+          "resolved": 1,
+          "open": 0,
+          "highlights": 1
+        }
+      },
+      "lastUpdatedAt": 1776240339071
+    }
+  }
 }
