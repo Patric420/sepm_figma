@@ -31,6 +31,8 @@ export interface WorkspaceProject {
   aiConfidence: number;
   dateText: string;
   createdAt: string;
+  transcript?: string;
+  participants?: string;
 }
 
 export interface WorkspaceActivity {
