@@ -4,10 +4,16 @@ const fs = require('fs');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+require('dotenv').config();
 
 const app = express();
 const PORT = 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-jwt-key-2026';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
+
+if (!GEMINI_API_KEY) {
+  console.warn('[BACKEND] GEMINI_API_KEY not found in .env. Falling back to local text processing.');
+}
 
 app.use(cors());
 app.use(express.json());

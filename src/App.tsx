@@ -1,10 +1,94 @@
-import { useState, useEffect } from 'react';
-import { ChevronDown, ArrowRight, Quote, Box, Layout, BarChart, Database, FileText, CheckCircle, Loader2, X, UploadCloud, Copy, Moon, Sun } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import {
+  ArrowRight,
+  BarChart3,
+  Bot,
+  Check,
+  CheckCircle2,
+  Circle,
+  Clock3,
+  Copy,
+  FileText,
+  FolderKanban,
+  Loader2,
+  Menu,
+  MessageSquare,
+  Moon,
+  Plus,
+  Settings,
+  Star,
+  Sun,
+  Upload,
+  Users,
+  X,
+} from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 import { backend } from './lib/backend';
 import type { User } from './lib/backend';
 
-function ThemeToggle({ isDark, toggleDark }: { isDark: boolean, toggleDark: () => void }) {
+type ViewKey =
+  | 'dashboard'
+  | 'upload'
+  | 'processing'
+  | 'generated'
+  | 'templates'
+  | 'collaboration'
+  | 'settings';
+
+type NavItem = {
+  key: ViewKey;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+type MetricCard = {
+  title: string;
+  value: string;
+  delta: string;
+  positive: boolean;
+};
+
+type IconType = React.ComponentType<{ className?: string }>;
+
+const navItems: NavItem[] = [
+  { key: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+  { key: 'upload', label: 'Upload Meeting', icon: Upload },
+  { key: 'processing', label: 'AI Processing', icon: Bot },
+  { key: 'generated', label: 'Generated SOWs', icon: FileText },
+  { key: 'templates', label: 'Templates', icon: FolderKanban },
+  { key: 'collaboration', label: 'Collaboration', icon: Users },
+  { key: 'settings', label: 'Settings', icon: Settings },
+];
+
+const dashboardMetrics: MetricCard[] = [
+  { title: 'Meetings Processed', value: '127', delta: '+12%', positive: true },
+  { title: 'SOWs Generated', value: '84', delta: '+8%', positive: true },
+  { title: 'Pending Reviews', value: '6', delta: '-3%', positive: false },
+  { title: 'AI Confidence Score', value: '94%', delta: '+2%', positive: true },
+];
+
+const processingSteps: Array<{ step: string; done: boolean }> = [
+  { step: 'Transcript Analysis', done: true },
+  { step: 'Image Recognition', done: true },
+  { step: 'Requirement Extraction', done: true },
+  { step: 'Scope Identification', done: true },
+  { step: 'SOW Generation', done: false },
+];
+
+const templateStats: Array<{ count: string; label: string; Icon: IconType }> = [
+  { count: '12', label: 'Total Templates', Icon: FileText },
+  { count: '6', label: 'Custom Templates', Icon: Star },
+  { count: '4', label: 'Recently Used', Icon: Clock3 },
+];
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return fallback;
+}
+
+function ThemeToggle({ isDark, toggleDark }: { isDark: boolean; toggleDark: () => void }) {
   return (
     <button
       onClick={toggleDark}
@@ -16,7 +100,15 @@ function ThemeToggle({ isDark, toggleDark }: { isDark: boolean, toggleDark: () =
   );
 }
 
-function AuthModal({ isOpen, onClose, onLoginSuccess }: { isOpen: boolean, onClose: () => void, onLoginSuccess: (u: User) => void }) {
+function AuthModal({
+  isOpen,
+  onClose,
+  onLoginSuccess,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onLoginSuccess: (u: User) => void;
+}) {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
@@ -29,18 +121,14 @@ function AuthModal({ isOpen, onClose, onLoginSuccess }: { isOpen: boolean, onClo
     e.preventDefault();
     setLoading(true);
     try {
-      let user;
-      if (isLogin) {
-        user = await backend.login(email, password);
-        toast.success("Welcome back!");
-      } else {
-        user = await backend.signup(name, email, password);
-        toast.success("Account created successfully!");
-      }
+      const user = isLogin
+        ? await backend.login(email, password)
+        : await backend.signup(name, email, password);
+      toast.success(isLogin ? 'Welcome back!' : 'Account created successfully!');
       onLoginSuccess(user);
       onClose();
-    } catch (err: any) {
-      toast.error(err.message || "An error occurred.");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Authentication failed.'));
     } finally {
       setLoading(false);
     }
@@ -48,40 +136,81 @@ function AuthModal({ isOpen, onClose, onLoginSuccess }: { isOpen: boolean, onClo
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-sm">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative animate-in fade-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-800">
-        <button onClick={onClose} className="absolute right-4 top-4 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-full p-1.5 focus:outline-none">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative border border-slate-200 dark:border-slate-800">
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-full p-1.5"
+        >
           <X className="w-4 h-4" />
         </button>
         <div className="px-8 py-10">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{isLogin ? "Welcome back" : "Create an account"}</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">{isLogin ? "Enter your credentials to access your account." : "Start generating instant SOWs today."}</p>
-          
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+            {isLogin ? 'Welcome back' : 'Create an account'}
+          </h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">
+            {isLogin
+              ? 'Enter your credentials to access your account.'
+              : 'Start generating instant SOWs today.'}
+          </p>
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Full Name</label>
-                <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-600 dark:focus:ring-primary-500" placeholder="Jane Doe" />
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Full Name
+                </label>
+                <input
+                  required
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                  placeholder="Jane Doe"
+                />
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
-              <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-600 dark:focus:ring-primary-500" placeholder="jane@example.com" />
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Email Address
+              </label>
+              <input
+                required
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                placeholder="jane@example.com"
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password</label>
-              <input required type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-600 dark:focus:ring-primary-500" placeholder="••••••••" />
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Password
+              </label>
+              <input
+                required
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                placeholder="••••••••"
+              />
             </div>
-            
-            <button type="submit" disabled={loading} className="w-full bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-500 text-white font-semibold py-3 rounded-xl transition-colors mt-6 flex justify-center items-center gap-2">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 rounded-xl transition-colors mt-6 flex justify-center items-center gap-2"
+            >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isLogin ? "Sign in" : "Register"}
+              {isLogin ? 'Sign in' : 'Register'}
             </button>
           </form>
-
           <div className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
-            {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-            <button type="button" onClick={() => setIsLogin(!isLogin)} className="font-semibold text-primary-600 dark:text-primary-400 hover:underline">
-              {isLogin ? "Sign up" : "Log in"}
+            {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
+            <button
+              type="button"
+              onClick={() => setIsLogin(!isLogin)}
+              className="font-semibold text-primary-600 dark:text-primary-400 hover:underline"
+            >
+              {isLogin ? 'Sign up' : 'Log in'}
             </button>
           </div>
         </div>
@@ -90,364 +219,767 @@ function AuthModal({ isOpen, onClose, onLoginSuccess }: { isOpen: boolean, onClo
   );
 }
 
-function Navbar({ user, onOpenAuth, onLogout, isDark, toggleDark }: { user: User | null, onOpenAuth: () => void, onLogout: () => void, isDark: boolean, toggleDark: () => void }) {
-  const navLinkClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (!user) {
-      onOpenAuth();
-    } else {
-      toast("Feature coming soon!", { icon: "🛠️" });
-    }
-  };
-
+function LandingNavbar({
+  onOpenAuth,
+  isDark,
+  toggleDark,
+}: {
+  onOpenAuth: () => void;
+  isDark: boolean;
+  toggleDark: () => void;
+}) {
   return (
     <nav className="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto w-full">
-      <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-        <div className="w-8 h-8 rounded shrink-0 bg-gradient-to-br from-indigo-500 to-primary-700 flex items-center justify-center">
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-primary-700 flex items-center justify-center">
           <FileText className="w-4 h-4 text-white" />
         </div>
         <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">AutoSOW</span>
       </div>
-      
-      <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600 dark:text-slate-300">
-        <a href="#" onClick={navLinkClick} className="hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1">Templates <ChevronDown className="w-4 h-4" /></a>
-        <a href="#" onClick={navLinkClick} className="hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1">Use Cases <ChevronDown className="w-4 h-4" /></a>
-        <a href="#" onClick={navLinkClick} className="hover:text-slate-900 dark:hover:text-white transition-colors">Pricing</a>
-      </div>
-
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <ThemeToggle isDark={isDark} toggleDark={toggleDark} />
-        {user ? (
-          <div className="flex items-center gap-4 border border-slate-200 dark:border-slate-800 px-3 py-1.5 rounded-full bg-white dark:bg-slate-900 shadow-sm">
-            <img src={user.avatar} alt="User Avatar" className="w-8 h-8 rounded-full ring-2 ring-primary-50 dark:ring-primary-900/50 bg-slate-100 dark:bg-slate-800" />
-            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 hidden sm:block pr-2">{user.name}</span>
-            <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
-            <button onClick={onLogout} className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors">Log out</button>
-          </div>
-        ) : (
-          <>
-            <button onClick={onOpenAuth} className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hidden sm:block">
-              Log in
-            </button>
-            <button 
-              onClick={onOpenAuth} 
-              className="bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-500 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm shadow-primary-600/20"
-            >
-              Get started
-            </button>
-          </>
-        )}
+        <button
+          onClick={onOpenAuth}
+          className="bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-lg text-sm font-semibold"
+        >
+          Get started
+        </button>
       </div>
     </nav>
   );
 }
 
-function Hero({ onOpenAuth }: { onOpenAuth: () => void }) {
-  const [email, setEmail] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async () => {
-    if (!email) {
-      toast.error("Please enter your email to join the waitlist!");
-      return;
-    }
-    setIsSubmitting(true);
-    try {
-      await backend.submitLead(email);
-      toast.success("Success! You've joined the waitlist.");
-      setEmail('');
-    } catch (e: any) {
-      toast.error(e.message || "Failed to submit.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
+function Landing({ onOpenAuth }: { onOpenAuth: () => void }) {
   return (
-    <section className="max-w-7xl mx-auto px-6 py-20 lg:py-32 grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+    <section className="max-w-7xl mx-auto px-6 py-20 lg:py-32 grid lg:grid-cols-2 gap-12 items-center">
       <div className="max-w-2xl">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-sm font-semibold mb-6 border border-primary-100/50 dark:border-primary-800/50">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
-          </span>
-          AI-Powered Workflows
-        </div>
-        <h1 className="text-5xl lg:text-7xl font-bold tracking-tight text-slate-900 dark:text-white leading-[1.1] mb-6">
-          Turn Meetings Into <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-indigo-600 dark:from-primary-400 dark:to-indigo-400">Actionable SOWs.</span>
+        <h1 className="text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 dark:text-white leading-[1.1] mb-6">
+          Build SOWs Faster With <span className="text-primary-600 dark:text-primary-400">AI + Templates</span>
         </h1>
         <p className="text-lg text-slate-600 dark:text-slate-400 mb-8 max-w-lg leading-relaxed">
-          Stop writing Statements of Work from scratch. AutoSOW processes your meeting transcripts and automatically extracts deliverables, timelines, and budgets.
+          Upload meetings, extract requirements, collaborate on drafts, and ship polished Statements of Work.
         </p>
-        
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <input 
-            type="email" 
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter email for early access" 
-            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-            className="px-5 py-3.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-600 dark:focus:ring-primary-500 flex-1 sm:max-w-xs shadow-sm"
-          />
-          <button 
-            onClick={handleSubmit} 
-            disabled={isSubmitting}
-            className="bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 dark:disabled:bg-slate-700 text-white px-8 py-3.5 rounded-xl font-semibold transition-all shadow-md whitespace-nowrap flex items-center justify-center gap-2"
-          >
-            {isSubmitting && <Loader2 className="w-4 h-4 animate-spin text-current" />}
-            Join Waitlist
-          </button>
-        </div>
-        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium flex items-center gap-2">
-          Already got an account? <button onClick={onOpenAuth} className="text-primary-600 dark:text-primary-400 hover:underline">Log in to your dashboard</button>
-        </p>
+        <button
+          onClick={onOpenAuth}
+          className="bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 text-white px-8 py-3.5 rounded-xl font-semibold inline-flex items-center gap-2"
+        >
+          Launch Workspace <ArrowRight className="w-4 h-4" />
+        </button>
       </div>
-      
-      <div className="relative aspect-square lg:aspect-auto lg:h-[500px] w-full bg-slate-100 dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xl flex items-center justify-center p-8">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-primary-50 dark:from-slate-900 dark:to-primary-950/20" />
-        
-        <div className="w-full h-full relative">
-           {/* Mock Transcript Box */}
-           <div className="absolute top-4 left-4 w-64 h-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-4 transform -rotate-3 z-10 transition-transform">
-              <div className="flex items-center gap-2 mb-3">
-                <FileText className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Transcript.txt</span>
-              </div>
-              <div className="w-11/12 h-2 bg-slate-200 dark:bg-slate-700 rounded mb-2" />
-              <div className="w-full h-2 bg-slate-100 dark:bg-slate-700/50 rounded mb-2" />
-              <div className="w-4/5 h-2 bg-slate-100 dark:bg-slate-700/50 rounded mb-2" />
-              <div className="w-full h-2 bg-slate-100 dark:bg-slate-700/50 rounded mb-2" />
-              <div className="w-5/6 h-2 bg-slate-100 dark:bg-slate-700/50 rounded" />
-           </div>
-           
-           {/* Arrow / Connection */}
-           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-slate-800 rounded-full p-3 shadow-lg z-30 border border-slate-100 dark:border-slate-700">
-             <ArrowRight className="w-6 h-6 text-primary-500 dark:text-primary-400" />
-           </div>
-
-           {/* Mock SOW Document Box */}
-           <div className="absolute bottom-12 right-4 w-72 h-56 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 p-5 transform rotate-2 z-20">
-             <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-slate-700">
-               <h4 className="font-bold text-slate-800 dark:text-white text-sm">Statement of Work</h4>
-               <CheckCircle className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
-             </div>
-             <div className="space-y-3">
-               <div className="w-1/2 h-3 bg-slate-800 dark:bg-slate-300 rounded" />
-               <div className="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded" />
-               <div className="w-4/5 h-2 bg-slate-100 dark:bg-slate-700 rounded" />
-               <div className="w-full h-20 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded p-2 pt-3">
-                 <div className="w-1/3 h-2 bg-primary-100 dark:bg-primary-900/50 rounded mb-2" />
-                 <div className="w-1/4 h-2 bg-primary-100 dark:bg-primary-900/50 rounded" />
-               </div>
-             </div>
-           </div>
-           
-           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-primary-500 dark:bg-primary-600 rounded-2xl opacity-10 mix-blend-multiply dark:mix-blend-lighten blur-2xl z-0" />
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 shadow-xl">
+        <div className="space-y-4">
+          <div className="p-4 rounded-xl bg-primary-50 dark:bg-primary-900/30 border border-primary-100 dark:border-primary-900">
+            <p className="font-semibold text-primary-700 dark:text-primary-300">1. Upload Transcript</p>
+          </div>
+          <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-900">
+            <p className="font-semibold text-emerald-700 dark:text-emerald-300">2. AI Requirement Extraction</p>
+          </div>
+          <div className="p-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-900">
+            <p className="font-semibold text-indigo-700 dark:text-indigo-300">3. Generate Structured SOW</p>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-// -------------------------------------------------------------
-// NEW DASHBOARD VIEW FOR AUTHENTICATED USERS
-// -------------------------------------------------------------
-function Dashboard({ user }: { user: User }) {
-  const [transcript, setTranscript] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [sowResult, setSowResult] = useState<string | null>(null);
-
-  const handleGenerate = async () => {
-    if (!transcript.trim()) {
-      toast.error("Please paste a meeting transcript first.");
-      return;
-    }
-    
-    setIsGenerating(true);
-    setSowResult(null);
-    try {
-      const response = await backend.generateSOW(transcript);
-      setSowResult(response.sow);
-      toast.success("Statement of Work generated successfully!");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to generate SOW.");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const copyToClipboard = () => {
-    if (sowResult) {
-      navigator.clipboard.writeText(sowResult);
-      toast.success("Copied to clipboard!");
-    }
-  };
+function Sidebar({
+  user,
+  active,
+  onChange,
+  mobileOpen,
+  setMobileOpen,
+}: {
+  user: User;
+  active: ViewKey;
+  onChange: (view: ViewKey) => void;
+  mobileOpen: boolean;
+  setMobileOpen: (open: boolean) => void;
+}) {
+  const menuClasses = mobileOpen
+    ? 'fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-slate-900 shadow-xl border-r border-slate-200 dark:border-slate-800'
+    : 'hidden md:flex md:flex-col md:w-60 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800';
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12">
-      <div className="mb-10">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Welcome to your AutoSOW Dashboard, {user.name.split(' ')[0]}</h1>
-        <p className="text-slate-600 dark:text-slate-400 mt-2">Paste a meeting transcript below to automatically extract requirements, scope, and generate a Statement of Work.</p>
+    <>
+      {mobileOpen && (
+        <button
+          className="fixed inset-0 z-30 bg-slate-900/40 md:hidden"
+          onClick={() => setMobileOpen(false)}
+          aria-label="Close sidebar overlay"
+        />
+      )}
+      <aside className={menuClasses}>
+        <div className="h-16 px-5 border-b border-slate-200 dark:border-slate-800 flex items-center gap-2">
+          <div className="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-primary-700 flex items-center justify-center">
+            <FileText className="w-4 h-4 text-white" />
+          </div>
+          <span className="font-bold text-xl text-slate-900 dark:text-white">AutoSOW</span>
+        </div>
+        <nav className="p-3 space-y-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = active === item.key;
+            return (
+              <button
+                key={item.key}
+                onClick={() => {
+                  onChange(item.key);
+                  setMobileOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2.5 text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-primary-600 text-white'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
+        <div className="mt-auto p-3 border-t border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-3 rounded-lg px-2 py-2">
+            <img
+              src={user.avatar}
+              alt={user.name}
+              className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800"
+            />
+            <div>
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 leading-4">{user.name}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}
+
+function DashboardView() {
+  return (
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Dashboard</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Welcome back! Here's an overview of your SOW generation activity.
+        </p>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-8">
-        
-        {/* Transcript Input Area */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 flex flex-col h-[600px]">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-              <UploadCloud className="w-5 h-5 text-primary-600 dark:text-primary-400" /> Input Transcript
-            </h2>
-            <button 
-              onClick={() => setTranscript('')} 
-              className="text-xs text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors font-medium"
-            >
-              Clear
-            </button>
-          </div>
-          <textarea 
-            value={transcript}
-            onChange={(e) => setTranscript(e.target.value)}
-            disabled={isGenerating}
-            placeholder="Paste your Zoom/Teams/Meet transcript here...&#10;&#10;e.g.&#10;Client: 'We need the new SaaS dashboard built by end of Q2. It should involve a full frontend rewrite using React and an API layer matching our existing REST specs. Budget is roughly $40k.'&#10;Agent: 'Understood. We will split that into three phases...'"
-            className="flex-1 w-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary-600 dark:focus:ring-primary-500 focus:bg-white dark:focus:bg-slate-900 transition-all resize-none font-mono text-sm leading-relaxed"
-          ></textarea>
-          
-          <button 
-            onClick={handleGenerate}
-            disabled={isGenerating || !transcript.trim()}
-            className="mt-6 w-full bg-slate-900 hover:bg-slate-800 dark:bg-primary-600 dark:hover:bg-primary-500 disabled:bg-slate-400 dark:disabled:bg-slate-800 text-white font-semibold py-4 rounded-xl transition-all shadow-md flex justify-center items-center gap-2"
+      <div className="grid xl:grid-cols-4 md:grid-cols-2 gap-4">
+        {dashboardMetrics.map((metric) => (
+          <div
+            key={metric.title}
+            className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4"
           >
-            {isGenerating ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Analyzing Transcript & Synthesizing SOW...
-              </>
-            ) : "Generate Statement of Work"}
-          </button>
-        </div>
-
-        {/* SOW Result Area */}
-        <div className="bg-slate-900 dark:bg-slate-950 rounded-2xl border border-slate-800 dark:border-slate-800/50 shadow-xl p-6 flex flex-col h-[600px] relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-500 to-indigo-500 dark:from-primary-600 dark:to-indigo-600" />
-          
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              <FileText className="w-5 h-5 text-primary-400 dark:text-primary-500" /> Generated Document
-            </h2>
-            {sowResult && (
-              <button 
-                onClick={copyToClipboard}
-                className="text-xs flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 dark:bg-slate-800/50 dark:hover:bg-slate-800 text-slate-300 px-3 py-1.5 rounded-md transition-colors"
+            <div className="flex justify-between items-start mb-6">
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{metric.title}</span>
+              <span
+                className={`text-xs font-semibold ${
+                  metric.positive ? 'text-emerald-500' : 'text-rose-500'
+                }`}
               >
-                <Copy className="w-3.5 h-3.5" /> Copy Markdown
-              </button>
-            )}
+                {metric.delta}
+              </span>
+            </div>
+            <p className="text-3xl font-bold text-slate-900 dark:text-white">{metric.value}</p>
           </div>
-          
-          <div className="flex-1 w-full p-6 rounded-xl border border-slate-700 dark:border-slate-800/80 bg-slate-950/50 dark:bg-slate-900/50 text-slate-300 overflow-y-auto custom-scrollbar">
-            {sowResult ? (
-              <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-slate-300 dark:text-slate-400">
-                {sowResult}
-              </pre>
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 dark:text-slate-600 gap-4 opacity-50">
-                <Box className="w-12 h-12" />
-                <p className="text-sm font-medium">Your generated SOW will appear here.</p>
+        ))}
+      </div>
+
+      <div className="grid xl:grid-cols-2 gap-4">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+          <h3 className="font-semibold text-slate-900 dark:text-white mb-4">SOWs Generated Over Time</h3>
+          <svg viewBox="0 0 400 140" className="w-full h-44">
+            <polyline
+              fill="none"
+              stroke="#4f46e5"
+              strokeWidth="2.5"
+              points="10,95 75,70 140,82 205,54 270,64 335,40"
+            />
+            {[10, 75, 140, 205, 270, 335].map((x) => (
+              <circle key={x} cx={x} cy={x === 10 ? 95 : x === 75 ? 70 : x === 140 ? 82 : x === 205 ? 54 : x === 270 ? 64 : 40} r="3" fill="#4f46e5" />
+            ))}
+          </svg>
+        </div>
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+          <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Monthly Performance</h3>
+          <svg viewBox="0 0 400 140" className="w-full h-44">
+            {[50, 80, 65, 105, 92, 118].map((height, idx) => (
+              <rect
+                key={idx}
+                x={12 + idx * 63}
+                y={130 - height}
+                width="48"
+                height={height}
+                rx="4"
+                fill="#14b8a6"
+              />
+            ))}
+          </svg>
+        </div>
+      </div>
+
+      <div className="grid xl:grid-cols-3 gap-4">
+        <div className="xl:col-span-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-slate-900 dark:text-white">Recent Projects</h3>
+            <button className="text-sm text-primary-600 dark:text-primary-400">View All</button>
+          </div>
+          <div className="space-y-2">
+            {[
+              ['Mobile App Development - Acme Corp', 'Completed', '96%'],
+              ['Cloud Migration Project - TechStart', 'In Review', '92%'],
+              ['CRM Implementation - Global Sales', 'Completed', '98%'],
+              ['Data Analytics Platform - DataCo', 'Draft', '88%'],
+            ].map(([name, status, confidence]) => (
+              <div
+                key={name}
+                className="rounded-lg border border-slate-200 dark:border-slate-800 px-3 py-2.5 flex justify-between items-center"
+              >
+                <div>
+                  <p className="font-semibold text-sm text-slate-900 dark:text-white">{name}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">AI Confidence: {confidence}</p>
+                </div>
+                <span className="text-xs px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                  {status}
+                </span>
               </div>
-            )}
+            ))}
           </div>
         </div>
-
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+          <h3 className="font-semibold text-slate-900 dark:text-white mb-3">Recent Activity</h3>
+          <div className="space-y-3">
+            {[
+              'SOW Generated - Mobile App Development',
+              'Meeting Uploaded - E-commerce Redesign',
+              'SOW Approved - Cloud Migration',
+              'Template Created - Custom Consulting',
+            ].map((item) => (
+              <div key={item} className="flex gap-2 text-sm">
+                <Circle className="w-2.5 h-2.5 mt-1.5 fill-primary-500 text-primary-500" />
+                <p className="text-slate-600 dark:text-slate-300">{item}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
+function UploadView() {
+  const [transcript, setTranscript] = useState('');
+  const [projectName, setProjectName] = useState('');
+  const [clientName, setClientName] = useState('');
+  const [meetingDate, setMeetingDate] = useState('');
+  const [participants, setParticipants] = useState('');
 
-function Feature({ title, description, reverse = false }: { title: string, description: string, reverse?: boolean }) {
-  const handleLearnMore = (e: React.MouseEvent) => {
-    e.preventDefault();
-    toast(`Learning more about: ${title}`, { icon: 'ℹ️' });
+  const runGeneration = async () => {
+    if (!transcript.trim()) {
+      toast.error('Please paste meeting transcript text first.');
+      return;
+    }
+    try {
+      const result = await backend.generateSOW(transcript);
+      await navigator.clipboard.writeText(result.sow);
+      toast.success('SOW generated and copied to clipboard.');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to generate SOW.'));
+    }
   };
+
   return (
-    <section className="py-20 lg:py-24 bg-white dark:bg-slate-950 overflow-hidden">
-      <div className={`max-w-7xl mx-auto px-6 flex flex-col gap-12 items-center ${reverse ? 'lg:flex-row-reverse' : 'lg:flex-row'}`}>
-        <div className="flex-1 w-full bg-slate-100 dark:bg-slate-900 rounded-2xl aspect-[4/3] border border-slate-200 dark:border-slate-800 shadow-lg relative p-2 overflow-hidden flex flex-col group">
-          <div className="h-6 w-full border-b border-slate-200 dark:border-slate-800 flex items-center px-4 gap-1.5 shrink-0 bg-white dark:bg-slate-950 rounded-t-xl mb-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-700" />
-            <div className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-700" />
-            <div className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-700" />
-          </div>
-          <div className="flex-1 bg-white dark:bg-slate-950 rounded-b-xl overflow-hidden border border-slate-100 dark:border-slate-800/50 p-6 relative">
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:24px_24px]"></div>
-             <div className="relative z-10 w-full h-full flex items-center justify-center">
-               <div className="w-48 h-48 rounded-full bg-primary-100/50 dark:bg-primary-900/30 absolute blur-3xl group-hover:bg-primary-200/50 dark:group-hover:bg-primary-800/30 transition-colors" />
-               <FileText className="w-16 h-16 text-primary-500/80 dark:text-primary-500/60 drop-shadow-lg" />
-             </div>
-          </div>
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Upload Meeting Data</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Upload your meeting transcript and any relevant images to generate a structured SOW.
+        </p>
+      </div>
+
+      <div className="grid xl:grid-cols-2 gap-4">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+          <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Meeting Transcript</h3>
+          <label className="block mb-3 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 p-6 text-center cursor-pointer">
+            <Upload className="w-6 h-6 mx-auto text-slate-400 mb-2" />
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Click to upload or drag and drop</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">.txt or .docx files accepted</p>
+            <input type="file" className="hidden" accept=".txt,.doc,.docx" />
+          </label>
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Or Paste Transcript</p>
+          <textarea
+            value={transcript}
+            onChange={(e) => setTranscript(e.target.value)}
+            placeholder="Paste your meeting transcript here..."
+            className="w-full h-44 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 p-3 text-sm"
+          />
         </div>
-        <div className="flex-1 max-w-xl">
-          <div className="h-1 w-12 bg-primary-600 dark:bg-primary-500 rounded mb-6" />
-          <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-6">{title}</h2>
-          <p className="text-lg text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">{description}</p>
-          <a href="#" onClick={handleLearnMore} className="inline-flex items-center gap-2 font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors group">
-            Learn more <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </a>
+
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+          <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Images & Photos</h3>
+          <label className="block rounded-lg border border-dashed border-teal-400/60 p-8 text-center cursor-pointer">
+            <Upload className="w-6 h-6 mx-auto text-teal-500 mb-2" />
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Upload whiteboard photos or slides</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">PNG, JPG, or PDF accepted</p>
+            <input type="file" className="hidden" accept=".png,.jpg,.jpeg,.pdf" multiple />
+          </label>
         </div>
       </div>
-    </section>
+
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+        <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Meeting Information</h3>
+        <div className="grid md:grid-cols-2 gap-3">
+          <input
+            value={projectName}
+            onChange={(e) => setProjectName(e.target.value)}
+            placeholder="Project Name"
+            className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-3 py-2"
+          />
+          <input
+            value={clientName}
+            onChange={(e) => setClientName(e.target.value)}
+            placeholder="Client Name"
+            className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-3 py-2"
+          />
+          <input
+            value={meetingDate}
+            onChange={(e) => setMeetingDate(e.target.value)}
+            placeholder="dd-mm-yyyy"
+            className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-3 py-2"
+          />
+          <input
+            value={participants}
+            onChange={(e) => setParticipants(e.target.value)}
+            placeholder="Participants"
+            className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-3 py-2"
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          AI will analyze your transcript and images to generate a structured SOW.
+        </p>
+        <button
+          onClick={runGeneration}
+          className="px-5 py-2.5 rounded-lg bg-gradient-to-r from-primary-600 to-teal-500 text-white font-semibold text-sm"
+        >
+          Generate SOW with AI
+        </button>
+      </div>
+    </div>
   );
 }
 
-const templates = [
-  { name: "Software Development", icon: Layout, color: "bg-blue-50 border-blue-100 text-blue-600 dark:bg-blue-500/10 dark:border-blue-500/20 dark:text-blue-400" },
-  { name: "IT Consulting", icon: Database, color: "bg-indigo-50 border-indigo-100 text-indigo-600 dark:bg-indigo-500/10 dark:border-indigo-500/20 dark:text-indigo-400" },
-  { name: "Marketing Retainer", icon: BarChart, color: "bg-purple-50 border-purple-100 text-purple-600 dark:bg-purple-500/10 dark:border-purple-500/20 dark:text-purple-400" },
-  { name: "Design & UX Audit", icon: Box, color: "bg-rose-50 border-rose-100 text-rose-600 dark:bg-rose-500/10 dark:border-rose-500/20 dark:text-rose-400" },
-];
-
-function Templates({ onTemplateClick }: { onTemplateClick: (name: string) => void }) {
+function ProcessingView() {
   return (
-    <section className="py-24 bg-slate-50 dark:bg-slate-900 border-y border-slate-200 dark:border-slate-800">
-      <div className="max-w-7xl mx-auto px-6">
-        <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-12 text-center">Supported SOW Templates</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {templates.map((tpl, idx) => {
-            const Icon = tpl.icon;
-            return (
-              <div key={idx} onClick={() => onTemplateClick(tpl.name)} className="group cursor-pointer bg-white dark:bg-slate-950 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 hover:shadow-lg dark:hover:shadow-black/50 transition-all hover:-translate-y-1">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 border ${tpl.color}`}>
-                   <Icon strokeWidth={2} className="w-6 h-6" />
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">AI Processing</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Our AI is analyzing your meeting data and generating a structured SOW.
+        </p>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+        <div className="flex justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Loader2 className="w-4 h-4 text-primary-600 animate-spin" />
+            <span className="font-semibold text-slate-900 dark:text-white">Processing Your Data</span>
+          </div>
+          <span className="font-semibold text-primary-600">100%</span>
+        </div>
+        <div className="w-full h-2 rounded bg-slate-200 dark:bg-slate-700 overflow-hidden">
+          <div className="h-full w-full bg-slate-900 dark:bg-primary-500" />
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+        <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Processing Pipeline</h3>
+        <div className="space-y-4">
+          {processingSteps.map(({ step, done }) => (
+            <div key={step} className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {done ? (
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                ) : (
+                  <Loader2 className="w-5 h-5 text-primary-600 animate-spin" />
+                )}
+                <div>
+                  <p className="font-medium text-slate-900 dark:text-white">{step}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{done ? 'Completed' : 'In progress...'}</p>
                 </div>
-                <h3 className="font-semibold text-slate-900 dark:text-white mb-1">{tpl.name}</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Auto-formatting for {tpl.name.toLowerCase()} projects.</p>
               </div>
-            )
-          })}
+              {done && <Check className="w-4 h-4 text-emerald-500" />}
+            </div>
+          ))}
         </div>
       </div>
-    </section>
+
+      <div className="grid xl:grid-cols-2 gap-4">
+        <InsightCard
+          title="Extracted Requirements"
+          items={[
+            'Develop mobile application for iOS and Android',
+            'Implement user authentication system',
+            'Create admin dashboard for content management',
+            'Integrate payment gateway',
+          ]}
+        />
+        <InsightCard
+          title="Key Stakeholders"
+          items={['John Smith - Project Sponsor', 'Sarah Johnson - Product Manager', 'Michael Chen - Technical Lead']}
+        />
+        <InsightCard
+          title="Suggested Deliverables"
+          items={['Native iOS application', 'Native Android application', 'Admin web portal', 'API documentation']}
+        />
+        <InsightCard
+          title="Timeline Estimates"
+          items={['Phase 1: Design & Planning - 3 weeks', 'Phase 2: Development - 10 weeks', 'Phase 3: QA - 3 weeks']}
+        />
+      </div>
+    </div>
   );
 }
 
-function Footer() {
+function InsightCard({ title, items }: { title: string; items: string[] }) {
   return (
-    <footer className="bg-[#1A1D24] dark:bg-slate-950 text-slate-300 dark:text-slate-400 py-16 dark:border-t dark:border-slate-900">
-      <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-500 dark:text-slate-500">
-        <div className="flex items-center gap-2 text-white">
-            <div className="w-6 h-6 rounded bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
-              <FileText className="w-3 h-3 text-white" />
-            </div>
-            <span className="font-bold tracking-tight">AutoSOW</span>
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+      <h3 className="font-semibold text-slate-900 dark:text-white mb-3">{title}</h3>
+      <div className="space-y-2">
+        {items.map((item) => (
+          <div key={item} className="text-sm text-slate-600 dark:text-slate-300 flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
+            <span>{item}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function GeneratedSOWsView() {
+  const [generated, setGenerated] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
+  const sampleTranscript =
+    'Client needs a SaaS dashboard with role-based auth, analytics widgets, and monthly rollout milestones.';
+
+  const generateNow = async () => {
+    setIsLoading(true);
+    try {
+      const response = await backend.generateSOW(sampleTranscript);
+      setGenerated(response.sow);
+      toast.success('Generated a new SOW draft.');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Unable to generate SOW.'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const copyOutput = async () => {
+    if (!generated) return;
+    await navigator.clipboard.writeText(generated);
+    toast.success('Copied generated SOW.');
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Generated SOWs</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Review and export your latest generated documents.</p>
         </div>
-        <p>© 2026 AutoSOW Inc. All rights reserved.</p>
-        <div className="flex items-center gap-6">
-          <a href="#" className="hover:text-white dark:hover:text-slate-300">Privacy</a>
-          <a href="#" className="hover:text-white dark:hover:text-slate-300">Terms</a>
+        <button
+          onClick={generateNow}
+          disabled={isLoading}
+          className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-semibold flex items-center gap-2"
+        >
+          {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+          Generate New
+        </button>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+        <h3 className="font-semibold text-slate-900 dark:text-white mb-3">Latest Draft</h3>
+        {generated ? (
+          <>
+            <pre className="text-xs md:text-sm whitespace-pre-wrap rounded-lg p-4 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 max-h-[420px] overflow-auto">
+              {generated}
+            </pre>
+            <button
+              onClick={copyOutput}
+              className="mt-3 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium flex items-center gap-2"
+            >
+              <Copy className="w-4 h-4" />
+              Copy markdown
+            </button>
+          </>
+        ) : (
+          <p className="text-sm text-slate-500 dark:text-slate-400">No generated draft yet. Click “Generate New”.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TemplatesView() {
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">SOW Templates</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Choose from pre-built templates or create your own custom SOW structure.
+          </p>
+        </div>
+        <button className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-semibold flex items-center gap-2">
+          <Plus className="w-4 h-4" />
+          Create Custom Template
+        </button>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-4">
+        {templateStats.map(({ count, label, Icon }) => {
+          const I = Icon;
+          return (
+            <div key={label} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+              <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                <I className="w-4 h-4" />
+                <span className="text-xs font-medium">{label}</span>
+              </div>
+              <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">{count}</p>
+            </div>
+          );
+        })}
+      </div>
+
+      <h3 className="font-semibold text-slate-900 dark:text-white">Popular Templates</h3>
+      <div className="grid xl:grid-cols-3 gap-4">
+        {['Software Development SOW', 'Consulting Project SOW', 'UI/UX Design SOW'].map((name) => (
+          <TemplateCard key={name} name={name} popular />
+        ))}
+      </div>
+
+      <h3 className="font-semibold text-slate-900 dark:text-white">All Templates</h3>
+      <div className="grid xl:grid-cols-3 gap-4">
+        {[
+          'Software Development SOW',
+          'Consulting Project SOW',
+          'Implementation SOW',
+          'UI/UX Design SOW',
+          'Data Analytics SOW',
+          'Cloud Migration SOW',
+        ].map((name) => (
+          <TemplateCard key={name} name={name} />
+        ))}
+      </div>
+
+      <div className="rounded-2xl p-10 bg-gradient-to-r from-indigo-600 to-teal-500 text-white text-center">
+        <div className="w-12 h-12 rounded-full bg-white/20 mx-auto mb-4 flex items-center justify-center">
+          <Plus className="w-6 h-6" />
+        </div>
+        <h3 className="text-2xl font-bold mb-2">Create Your Own Template</h3>
+        <p className="text-sm text-indigo-100 mb-5">
+          Build a custom SOW template tailored to your organization's specific needs and workflows.
+        </p>
+        <button className="px-5 py-2.5 rounded-lg bg-white text-indigo-700 font-semibold">Get Started</button>
+      </div>
+    </div>
+  );
+}
+
+function TemplateCard({ name, popular = false }: { name: string; popular?: boolean }) {
+  return (
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+      <div className="flex justify-between items-start mb-3">
+        <h4 className="font-semibold text-slate-900 dark:text-white">{name}</h4>
+        {popular && <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-700">Popular</span>}
+      </div>
+      <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+        Professional structure for consistent SOW delivery and review.
+      </p>
+      <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
+        <span>7 sections</span>
+        <span>2 days ago</span>
+      </div>
+    </div>
+  );
+}
+
+function CollaborationView() {
+  return (
+    <div className="grid xl:grid-cols-[1fr_280px] gap-4">
+      <div className="space-y-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Collaboration</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Review, comment, and collaborate on SOW documents with your team.
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          {[
+            ['Mobile App Development - Acme Corp', 'In Review'],
+            ['Cloud Migration Project - TechStart', 'Approved'],
+            ['CRM Implementation - Global Sales', 'Pending Review'],
+          ].map(([name, status]) => (
+            <div key={name} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-semibold text-slate-900 dark:text-white">{name}</h3>
+                <span className="text-xs px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                  {status}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">12 comments • 4 collaborators • 2 hours ago</p>
+              <button className="w-full rounded-lg bg-primary-600 text-white py-2 text-sm font-medium">Open Document</button>
+            </div>
+          ))}
+        </div>
+
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-slate-900 dark:text-white">Recent Activity</h3>
+            <div className="flex gap-2 text-xs">
+              <button className="px-2 py-1 rounded bg-primary-600 text-white">Comments</button>
+              <button className="px-2 py-1 rounded border border-slate-200 dark:border-slate-700">Highlights</button>
+              <button className="px-2 py-1 rounded border border-slate-200 dark:border-slate-700">Versions</button>
+            </div>
+          </div>
+          <div className="space-y-3">
+            {[
+              ['Sarah Johnson', 'Timeline looks reasonable; add one buffer week.'],
+              ['Michael Chen', 'Include automated testing in deliverables?'],
+              ['Emily Davis', 'Need clarification on offline mode requirements.'],
+            ].map(([author, message]) => (
+              <div key={author} className="rounded-lg border border-slate-200 dark:border-slate-800 p-3">
+                <p className="font-semibold text-sm text-slate-900 dark:text-white">{author}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{message}</p>
+                <div className="text-xs mt-2 text-primary-600 dark:text-primary-400 flex items-center gap-4">
+                  <button>Reply</button>
+                  <button>Mark as Resolved</button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </footer>
+
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 h-fit">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-slate-900 dark:text-white">Team Members</h3>
+          <button className="p-1 rounded border border-slate-200 dark:border-slate-700">
+            <Plus className="w-3 h-3" />
+          </button>
+        </div>
+        <div className="space-y-3">
+          {[
+            ['John Doe', 'Project Lead'],
+            ['Sarah Johnson', 'Product Manager'],
+            ['Michael Chen', 'Technical Lead'],
+            ['Emily Davis', 'UX Designer'],
+            ['David Wilson', 'QA Manager'],
+          ].map(([name, role], idx) => (
+            <div key={name} className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-600 to-sky-500 text-white flex items-center justify-center text-xs font-bold">
+                {name
+                  .split(' ')
+                  .map((x) => x[0])
+                  .join('')
+                  .slice(0, 2)}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">{name}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{role}</p>
+              </div>
+              {idx < 3 && <div className="ml-auto w-2 h-2 rounded-full bg-emerald-500" />}
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-5 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <h4 className="font-semibold text-sm text-slate-900 dark:text-white mb-2">Activity Summary</h4>
+          <div className="space-y-1 text-sm">
+            <SummaryRow label="Total Comments" value="25" />
+            <SummaryRow label="Resolved" value="18" />
+            <SummaryRow label="Open" value="7" />
+            <SummaryRow label="Highlights" value="5" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between">
+      <span className="text-slate-500 dark:text-slate-400">{label}</span>
+      <span className="font-semibold text-slate-800 dark:text-slate-200">{value}</span>
+    </div>
+  );
+}
+
+function SettingsView({ user, onLogout }: { user: User; onLogout: () => void }) {
+  return (
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Settings</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Manage your workspace preferences.</p>
+      </div>
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+        <p className="text-sm text-slate-600 dark:text-slate-300 mb-1">
+          Signed in as <span className="font-semibold">{user.email}</span>
+        </p>
+        <button
+          onClick={onLogout}
+          className="mt-3 px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold"
+        >
+          Log out
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AppWorkspace({ user, onLogout }: { user: User; onLogout: () => void }) {
+  const [activeView, setActiveView] = useState<ViewKey>('dashboard');
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const renderContent = () => {
+    if (activeView === 'dashboard') return <DashboardView />;
+    if (activeView === 'upload') return <UploadView />;
+    if (activeView === 'processing') return <ProcessingView />;
+    if (activeView === 'generated') return <GeneratedSOWsView />;
+    if (activeView === 'templates') return <TemplatesView />;
+    if (activeView === 'collaboration') return <CollaborationView />;
+    return <SettingsView user={user} onLogout={onLogout} />;
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 flex">
+      <Sidebar
+        user={user}
+        active={activeView}
+        onChange={setActiveView}
+        mobileOpen={mobileOpen}
+        setMobileOpen={setMobileOpen}
+      />
+      <div className="flex-1 min-w-0">
+        <div className="md:hidden h-14 px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between">
+          <button onClick={() => setMobileOpen(true)} className="p-2 rounded border border-slate-200 dark:border-slate-700">
+            <Menu className="w-4 h-4" />
+          </button>
+          <p className="font-semibold text-slate-900 dark:text-white">AutoSOW</p>
+          <span className="w-8" />
+        </div>
+        <main className="p-4 md:p-6 lg:p-8">{renderContent()}</main>
+      </div>
+    </div>
   );
 }
 
@@ -455,11 +987,11 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
-
-  // Dark mode state implementation
   const [isDark, setIsDark] = useState(() => {
-    // Check if user has explicitly saved a preference, otherwise prefer dark scheme if os does
-    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    if (
+      localStorage.theme === 'dark' ||
+      (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    ) {
       return true;
     }
     return false;
@@ -475,68 +1007,61 @@ export default function App() {
     }
   }, [isDark]);
 
-  const toggleDark = () => setIsDark(!isDark);
-
-  // Rehydrate JWT session on page load
   useEffect(() => {
-    backend.me().then(sessionUser => {
-      if (sessionUser) setUser(sessionUser);
-    }).finally(() => {
-      setIsInitializing(false);
-    });
+    backend
+      .me()
+      .then((sessionUser) => {
+        if (sessionUser) setUser(sessionUser);
+      })
+      .finally(() => {
+        setIsInitializing(false);
+      });
   }, []);
 
   const handleLogout = async () => {
     await backend.logout();
     setUser(null);
-    toast.success("Logged out successfully.");
-  };
-
-  const checkAuthFirst = (action: () => void) => {
-    if (!user) {
-      toast("Please log in to use this feature.", { icon: "🔒" });
-      setIsAuthOpen(true);
-    } else {
-      action();
-    }
+    toast.success('Logged out successfully.');
   };
 
   if (isInitializing) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950"><Loader2 className="w-8 h-8 animate-spin text-primary-600 dark:text-primary-500" /></div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-600 dark:text-primary-500" />
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 selection:bg-primary-200 dark:selection:bg-primary-900/50 transition-colors duration-200">
-      <Toaster position="top-center" toastOptions={{ className: isDark ? '!bg-slate-800 !text-white' : '' }} />
-      <AuthModal 
-        isOpen={isAuthOpen} 
-        onClose={() => setIsAuthOpen(false)} 
-        onLoginSuccess={(u) => setUser(u)} 
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-200">
+      <Toaster
+        position="top-center"
+        toastOptions={{ className: isDark ? '!bg-slate-800 !text-white' : '' }}
       />
-      
-      <Navbar user={user} onOpenAuth={() => setIsAuthOpen(true)} onLogout={handleLogout} isDark={isDark} toggleDark={toggleDark} />
-      
-      <main>
-        {user ? (
-          <Dashboard user={user} />
-        ) : (
-          <>
-            <Hero onOpenAuth={() => setIsAuthOpen(true)} />
-            <Feature 
-              title="Automated Requirement Extraction" 
-              description="Simply paste your meeting transcript. AutoSOW identifies action items, timelines, technical requirements, and core deliverables out of messy conversation history."
-            />
-            <Feature 
-              title="Standardized Templates" 
-              description="Whether you run a marketing agency or a custom software shop, AutoSOW forces the AI-generated proposals to conform to your specific legal templates."
-              reverse
-            />
-            <Templates onTemplateClick={(name) => checkAuthFirst(() => toast.success(`Viewing ${name} configuration...`))} />
-          </>
-        )}
-      </main>
-      
-      <Footer />
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        onLoginSuccess={(loggedUser) => setUser(loggedUser)}
+      />
+      {user ? (
+        <AppWorkspace user={user} onLogout={handleLogout} />
+      ) : (
+        <>
+          <LandingNavbar
+            onOpenAuth={() => setIsAuthOpen(true)}
+            isDark={isDark}
+            toggleDark={() => setIsDark(!isDark)}
+          />
+          <Landing onOpenAuth={() => setIsAuthOpen(true)} />
+        </>
+      )}
+      <button
+        onClick={() => toast('Comments panel can be opened from Collaboration view.', { icon: <MessageSquare /> })}
+        className="fixed bottom-5 right-5 rounded-full bg-primary-600 text-white p-3 shadow-lg"
+        aria-label="Open quick help"
+      >
+        <MessageSquare className="w-4 h-4" />
+      </button>
     </div>
   );
 }

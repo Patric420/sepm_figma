@@ -47,7 +47,16 @@ AutoSOW is an AI-powered platform designed for agencies, consultants, and develo
    npm install
    ```
 
-3. **Run the development server:**
+3. **Configure environment variables:**
+   ```bash
+   copy .env.example .env
+   ```
+   Then set your Gemini key:
+   ```env
+   GEMINI_API_KEY=your_actual_key_here
+   ```
+
+4. **Run the development server:**
    ```bash
    npm run dev
    ```
