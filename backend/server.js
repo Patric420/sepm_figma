@@ -50,8 +50,253 @@ const saveUsers = () => fs.writeFileSync(USERS_FILE, JSON.stringify(users, null,
 const saveLeads = () => fs.writeFileSync(LEADS_FILE, JSON.stringify(leads, null, 2));
 const saveWorkspace = () => fs.writeFileSync(WORKSPACE_FILE, JSON.stringify(workspaceStore, null, 2));
 
+const PREBUILT_TEMPLATE_CATALOG = [
+  {
+    name: 'Software Development SOW',
+    description:
+      'Comprehensive template for custom software development projects including web and mobile applications.',
+    popular: true,
+    sectionHeadings: [
+      'Executive Summary',
+      'Scope of Work',
+      'Deliverables',
+      'Milestones and Timeline',
+      'Roles and Responsibilities',
+      'Assumptions',
+      'Acceptance Criteria',
+      'Commercials',
+    ],
+  },
+  {
+    name: 'Consulting Project SOW',
+    description: 'Professional services template for consulting engagements and advisory services.',
+    popular: true,
+    sectionHeadings: [
+      'Engagement Overview',
+      'Current State Assessment',
+      'Consulting Objectives',
+      'Workstreams',
+      'Timeline',
+      'Success Metrics',
+      'Fees and Terms',
+    ],
+  },
+  {
+    name: 'Implementation SOW',
+    description: 'Technical implementation template for deployments, integrations, and infrastructure.',
+    popular: false,
+    sectionHeadings: [
+      'Project Background',
+      'Technical Architecture',
+      'Implementation Plan',
+      'Environment Setup',
+      'Integration Scope',
+      'Testing Strategy',
+      'Go-Live Plan',
+      'Support Model',
+      'Risk Register',
+    ],
+  },
+  {
+    name: 'UI/UX Design SOW',
+    description: 'Creative services template for design projects and user research initiatives.',
+    popular: false,
+    sectionHeadings: [
+      'Design Vision',
+      'User Research Plan',
+      'Information Architecture',
+      'Wireframes and Prototypes',
+      'Visual Design System',
+      'Handoff and QA',
+    ],
+  },
+  {
+    name: 'Data Analytics SOW',
+    description: 'Data science and analytics template for BI implementations and reporting projects.',
+    popular: false,
+    sectionHeadings: [
+      'Business Questions',
+      'Data Sources and Quality',
+      'Analytics Scope',
+      'Modeling and Metrics',
+      'Dashboard Deliverables',
+      'Validation Approach',
+      'Governance and Adoption',
+    ],
+  },
+  {
+    name: 'Cloud Migration SOW',
+    description: 'Infrastructure template for cloud migration projects and DevOps implementations.',
+    popular: false,
+    sectionHeadings: [
+      'Migration Goals',
+      'Current State Inventory',
+      'Target Cloud Architecture',
+      'Migration Waves',
+      'Security and Compliance',
+      'Cutover Strategy',
+      'Post-Migration Support',
+      'Cost Optimization',
+    ],
+  },
+];
+
+const PREBUILT_TEMPLATE_NAME_SET = new Set(PREBUILT_TEMPLATE_CATALOG.map((template) => template.name));
+
+function makePrebuiltTemplate(definition, lastUsedText = 'Never used') {
+  return {
+    id: makeId('tpl'),
+    name: definition.name,
+    description: definition.description,
+    sections: definition.sectionHeadings.length,
+    sectionHeadings: definition.sectionHeadings,
+    lastUsedText,
+    popular: definition.popular,
+    source: 'prebuilt',
+  };
+}
+
+function buildTemplateSectionHeadings(sections) {
+  return Array.from({ length: Math.max(1, sections) }, (_, idx) => `Section ${idx + 1}`);
+}
+
+function ensurePrebuiltTemplates(workspace) {
+  if (!workspace.templates) {
+    workspace.templates = { stats: { total: 0, custom: 0, recentlyUsed: 0 }, popular: [], all: [] };
+  }
+  if (!Array.isArray(workspace.templates.all)) {
+    workspace.templates.all = [];
+  }
+  if (!Array.isArray(workspace.templates.popular)) {
+    workspace.templates.popular = [];
+  }
+
+  let hasChanges = false;
+  const templatesByName = new Map(
+    workspace.templates.all.map((template) => [template.name.toLowerCase(), template])
+  );
+
+  PREBUILT_TEMPLATE_CATALOG.forEach((definition) => {
+    const key = definition.name.toLowerCase();
+    const existing = templatesByName.get(key);
+    if (!existing) {
+      workspace.templates.all.push(makePrebuiltTemplate(definition));
+      hasChanges = true;
+      return;
+    }
+
+    if (!existing.source) {
+      existing.source = 'prebuilt';
+      hasChanges = true;
+    }
+    if (!Array.isArray(existing.sectionHeadings) || existing.sectionHeadings.length === 0) {
+      existing.sectionHeadings = definition.sectionHeadings;
+      hasChanges = true;
+    }
+    if (!Number.isFinite(Number(existing.sections)) || Number(existing.sections) < 1) {
+      existing.sections = definition.sectionHeadings.length;
+      hasChanges = true;
+    }
+    if (definition.popular && !existing.popular) {
+      existing.popular = true;
+      hasChanges = true;
+    }
+  });
+
+  workspace.templates.all.forEach((template) => {
+    if (!template.source) {
+      template.source = PREBUILT_TEMPLATE_NAME_SET.has(template.name) ? 'prebuilt' : 'custom';
+      hasChanges = true;
+    }
+    if (!Array.isArray(template.sectionHeadings) || template.sectionHeadings.length === 0) {
+      template.sectionHeadings = buildTemplateSectionHeadings(Number(template.sections) || 1);
+      hasChanges = true;
+    }
+  });
+
+  const popularTemplateNames = new Set(
+    PREBUILT_TEMPLATE_CATALOG.filter((template) => template.popular).map((template) => template.name)
+  );
+  const normalizedPopular = workspace.templates.all
+    .filter((template) => popularTemplateNames.has(template.name))
+    .map((template) => ({ ...template, popular: true, source: 'prebuilt' }));
+
+  if (
+    workspace.templates.popular.length !== normalizedPopular.length ||
+    workspace.templates.popular.some((template, index) => template.id !== normalizedPopular[index]?.id)
+  ) {
+    workspace.templates.popular = normalizedPopular;
+    hasChanges = true;
+  }
+
+  return hasChanges;
+}
+
+function markTemplateAsUsed(workspace, template) {
+  workspace.templates.all = workspace.templates.all.map((item) =>
+    item.id === template.id || item.name === template.name
+      ? { ...item, lastUsedText: 'Just now' }
+      : item
+  );
+  workspace.templates.popular = workspace.templates.popular.map((item) =>
+    item.id === template.id || item.name === template.name
+      ? { ...item, lastUsedText: 'Just now' }
+      : item
+  );
+}
+
+function buildSowFromTemplate(template, workspace) {
+  const latestProject = workspace.projects[0];
+  const generatedAt = new Date().toISOString();
+  const sectionHeadings =
+    Array.isArray(template.sectionHeadings) && template.sectionHeadings.length > 0
+      ? template.sectionHeadings
+      : buildTemplateSectionHeadings(Number(template.sections) || 1);
+  const timeline = workspace.processing.insights.timelineEstimates[0] || 'Timeline to be finalized';
+  const stakeholders =
+    latestProject?.participants?.split(',').map((entry) => entry.trim()).filter(Boolean).slice(0, 5) || [];
+  const stakeholderLine = stakeholders.length > 0 ? stakeholders.join(', ') : 'Client + delivery team';
+  const title = latestProject?.name || `${template.name} Engagement`;
+
+  const sectionContent = sectionHeadings
+    .map(
+      (heading, index) =>
+        `## ${index + 1}. ${heading}\n- This section follows the ${template.name} framework.\n- Tailor details for ${latestProject?.company || 'the client'} before final sign-off.`
+    )
+    .join('\n\n');
+
+  return {
+    generatedAt,
+    title,
+    markdown: [
+      '# Statement of Work (Template Draft)',
+      '',
+      `**Template**: ${template.name}`,
+      `**Date Generated**: ${getDateStamp(generatedAt)}`,
+      `**Project**: ${title}`,
+      '',
+      '---',
+      '',
+      '## Project Context',
+      `- **Summary**: ${template.description}`,
+      `- **Primary Stakeholders**: ${stakeholderLine}`,
+      `- **Reference Timeline**: ${timeline}`,
+      '',
+      sectionContent,
+      '',
+      '---',
+      '*This draft was generated from a prebuilt template. Review and refine section details before sharing with the client.*',
+    ].join('\n'),
+  };
+}
+
 function createDefaultWorkspace(user) {
   const now = Date.now();
+  const seededTemplates = PREBUILT_TEMPLATE_CATALOG.map((definition, index) => {
+    const defaultRecency =
+      index === 0 ? '2 days ago' : index === 1 ? '1 week ago' : index === 3 ? '3 days ago' : 'Never used';
+    return makePrebuiltTemplate(definition, defaultRecency);
+  });
 
   return {
     metrics: {
@@ -105,80 +350,12 @@ function createDefaultWorkspace(user) {
     generatedSows: [],
     templates: {
       stats: {
-        total: 6,
-        custom: 2,
+        total: seededTemplates.length,
+        custom: 0,
         recentlyUsed: 2,
       },
-      popular: [
-        {
-          id: makeId('tpl'),
-          name: 'Software Development SOW',
-          description:
-            'Comprehensive template for custom software development projects including web and mobile applications.',
-          sections: 8,
-          lastUsedText: '2 days ago',
-          popular: true,
-        },
-        {
-          id: makeId('tpl'),
-          name: 'Consulting Project SOW',
-          description: 'Professional services template for consulting engagements and advisory services.',
-          sections: 7,
-          lastUsedText: '1 week ago',
-          popular: true,
-        },
-      ],
-      all: [
-        {
-          id: makeId('tpl'),
-          name: 'Software Development SOW',
-          description:
-            'Comprehensive template for custom software development projects including web and mobile applications.',
-          sections: 8,
-          lastUsedText: '2 days ago',
-          popular: true,
-        },
-        {
-          id: makeId('tpl'),
-          name: 'Consulting Project SOW',
-          description: 'Professional services template for consulting engagements and advisory services.',
-          sections: 7,
-          lastUsedText: '1 week ago',
-          popular: true,
-        },
-        {
-          id: makeId('tpl'),
-          name: 'Implementation SOW',
-          description: 'Technical implementation template for deployments, integrations, and infrastructure.',
-          sections: 9,
-          lastUsedText: '2 weeks ago',
-          popular: false,
-        },
-        {
-          id: makeId('tpl'),
-          name: 'UI/UX Design SOW',
-          description: 'Creative services template for design projects and user research initiatives.',
-          sections: 6,
-          lastUsedText: '3 days ago',
-          popular: false,
-        },
-        {
-          id: makeId('tpl'),
-          name: 'Data Analytics SOW',
-          description: 'Data science and analytics template for BI implementations and reporting projects.',
-          sections: 7,
-          lastUsedText: '1 month ago',
-          popular: false,
-        },
-        {
-          id: makeId('tpl'),
-          name: 'Cloud Migration SOW',
-          description: 'Infrastructure template for cloud migration projects and DevOps implementations.',
-          sections: 8,
-          lastUsedText: '5 days ago',
-          popular: false,
-        },
-      ],
+      popular: seededTemplates.filter((template) => template.popular),
+      all: seededTemplates,
     },
     collaboration: {
       documents: [],
@@ -205,7 +382,13 @@ function getWorkspaceForUser(user) {
     workspaceStore.byUserId[userId] = createDefaultWorkspace(user);
     saveWorkspace();
   }
-  return workspaceStore.byUserId[userId];
+  const workspace = workspaceStore.byUserId[userId];
+  const hasTemplateUpdates = ensurePrebuiltTemplates(workspace);
+  if (hasTemplateUpdates) {
+    recalcTemplateStats(workspace);
+    saveWorkspace();
+  }
+  return workspace;
 }
 
 function setProcessingState(workspace, state) {
@@ -233,8 +416,10 @@ function shiftChartData(values, nextValue) {
 
 function recalcTemplateStats(workspace) {
   workspace.templates.stats.total = workspace.templates.all.length;
-  workspace.templates.stats.custom = workspace.templates.all.filter((tpl) => !tpl.popular).length;
-  workspace.templates.stats.recentlyUsed = Math.min(4, workspace.templates.all.length);
+  workspace.templates.stats.custom = workspace.templates.all.filter((tpl) => tpl.source === 'custom').length;
+  workspace.templates.stats.recentlyUsed = workspace.templates.all.filter(
+    (tpl) => typeof tpl.lastUsedText === 'string' && tpl.lastUsedText.toLowerCase() !== 'never used'
+  ).length;
 }
 
 function recalcCollaborationSummary(workspace) {
@@ -559,13 +744,16 @@ app.post('/api/workspace/templates', authenticateToken, (req, res) => {
   }
 
   const workspace = getWorkspaceForUser(req.user);
+  const sectionCount = Number.isFinite(Number(sections)) && Number(sections) > 0 ? Number(sections) : 6;
   const template = {
     id: makeId('tpl'),
     name,
     description,
-    sections: Number.isFinite(Number(sections)) && Number(sections) > 0 ? Number(sections) : 6,
+    sections: sectionCount,
+    sectionHeadings: buildTemplateSectionHeadings(sectionCount),
     lastUsedText: 'Just now',
     popular: false,
+    source: 'custom',
   };
   workspace.templates.all.unshift(template);
   recalcTemplateStats(workspace);
@@ -579,6 +767,47 @@ app.post('/api/workspace/templates', authenticateToken, (req, res) => {
   saveWorkspace();
 
   return res.json({ success: true, template });
+});
+
+app.post('/api/workspace/templates/:templateId/use', authenticateToken, async (req, res) => {
+  await delay(250);
+  const { templateId } = req.params;
+  const workspace = getWorkspaceForUser(req.user);
+  const template = workspace.templates.all.find((item) => item.id === templateId);
+
+  if (!template) {
+    return res.status(404).json({ error: 'Template not found.' });
+  }
+
+  const generated = buildSowFromTemplate(template, workspace);
+  const sowRecord = {
+    id: makeId('sow'),
+    title: `${template.name} Draft`,
+    content: generated.markdown,
+    createdAt: generated.generatedAt,
+  };
+
+  workspace.generatedSows.unshift(sowRecord);
+  workspace.metrics.sowGenerated += 1;
+  workspace.metrics.deltas.sowGenerated = 1;
+  workspace.metrics.deltas.aiConfidenceScore = 1;
+  workspace.metrics.aiConfidenceScore = Math.max(
+    85,
+    Math.min(99, workspace.metrics.aiConfidenceScore + 1)
+  );
+  markTemplateAsUsed(workspace, template);
+
+  workspace.activities.unshift({
+    id: makeId('act'),
+    title: 'Template Applied',
+    subtitle: template.name,
+    timestamp: generated.generatedAt,
+  });
+  recalcTemplateStats(workspace);
+  workspace.lastUpdatedAt = Date.now();
+  saveWorkspace();
+
+  return res.json({ success: true, sowRecord });
 });
 
 app.post('/api/sow/generate', authenticateToken, async (req, res) => {

@@ -61,6 +61,8 @@ export interface WorkspaceTemplate {
   sections: number;
   lastUsedText: string;
   popular: boolean;
+  source?: 'prebuilt' | 'custom';
+  sectionHeadings?: string[];
 }
 
 export interface CollaborationDocument {
@@ -241,6 +243,17 @@ export const backend = {
       body: JSON.stringify(payload),
     });
     await parseResponse<{ success: boolean }>(response, 'Failed to create template.');
+  },
+
+  async useTemplate(templateId: string): Promise<{ success: boolean; sowRecord: GeneratedSowRecord }> {
+    const response = await fetch(`${API_URL}/workspace/templates/${templateId}/use`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    return parseResponse<{ success: boolean; sowRecord: GeneratedSowRecord }>(
+      response,
+      'Failed to apply template.'
+    );
   },
 
   async resolveComment(commentId: string): Promise<void> {

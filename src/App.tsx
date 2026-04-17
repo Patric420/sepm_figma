@@ -63,12 +63,21 @@ function formatTimeAgo(isoString: string): string {
   return `${deltaDays}d ago`;
 }
 
-function ThemeToggle({ isDark, toggleDark }: { isDark: boolean; toggleDark: () => void }) {
+function ThemeToggle({
+  isDark,
+  toggleDark,
+  className = '',
+}: {
+  isDark: boolean;
+  toggleDark: () => void;
+  className?: string;
+}) {
   return (
     <button
       onClick={toggleDark}
-      className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-      aria-label="Toggle dark mode"
+      className={`p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors ${className}`}
+      aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+      title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
     >
       {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
     </button>
@@ -594,6 +603,7 @@ function TemplatesView({ workspace, onRefresh }: { workspace: WorkspaceData; onR
   const [description, setDescription] = useState('');
   const [sections, setSections] = useState('6');
   const [creating, setCreating] = useState(false);
+  const [activatingTemplateId, setActivatingTemplateId] = useState<string | null>(null);
 
   const create = async () => {
     if (!name || !description) {
@@ -620,6 +630,23 @@ function TemplatesView({ workspace, onRefresh }: { workspace: WorkspaceData; onR
     { count: workspace.templates.stats.custom, label: 'Custom Templates', icon: Star },
     { count: workspace.templates.stats.recentlyUsed, label: 'Recently Used', icon: Clock3 },
   ];
+  const prebuiltTemplates = workspace.templates.all.filter(
+    (template) => template.source === 'prebuilt' || template.popular
+  );
+  const customTemplates = workspace.templates.all.filter((template) => template.source === 'custom');
+
+  const useTemplate = async (template: WorkspaceData['templates']['all'][number]) => {
+    setActivatingTemplateId(template.id);
+    try {
+      await backend.useTemplate(template.id);
+      await onRefresh();
+      toast.success(`Created draft from ${template.name}.`);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Template application failed.'));
+    } finally {
+      setActivatingTemplateId(null);
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -628,6 +655,12 @@ function TemplatesView({ workspace, onRefresh }: { workspace: WorkspaceData; onR
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">SOW Templates</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">Templates are loaded and managed from backend data.</p>
         </div>
+      </div>
+
+      <div className="rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/70 dark:bg-indigo-950/30 p-4">
+        <p className="text-sm text-indigo-700 dark:text-indigo-200">
+          Pick any prebuilt template to instantly generate a ready-to-edit SOW draft in the Generated SOWs view.
+        </p>
       </div>
 
       <div className="grid md:grid-cols-3 gap-4">
@@ -656,33 +689,91 @@ function TemplatesView({ workspace, onRefresh }: { workspace: WorkspaceData; onR
         </button>
       </div>
 
-      <TemplateSection title="Popular Templates" templates={workspace.templates.popular} />
-      <TemplateSection title="All Templates" templates={workspace.templates.all} />
+      <TemplateSection
+        title="Prebuilt Templates"
+        templates={prebuiltTemplates}
+        onUseTemplate={useTemplate}
+        activatingTemplateId={activatingTemplateId}
+        emptyMessage="No prebuilt templates available."
+      />
+      <TemplateSection
+        title="Custom Templates"
+        templates={customTemplates}
+        onUseTemplate={useTemplate}
+        activatingTemplateId={activatingTemplateId}
+        emptyMessage="No custom templates yet. Create one above."
+      />
     </div>
   );
 }
 
-function TemplateSection({ title, templates }: { title: string; templates: WorkspaceData['templates']['all'] }) {
+function TemplateSection({
+  title,
+  templates,
+  onUseTemplate,
+  activatingTemplateId,
+  emptyMessage,
+}: {
+  title: string;
+  templates: WorkspaceData['templates']['all'];
+  onUseTemplate: (template: WorkspaceData['templates']['all'][number]) => Promise<void>;
+  activatingTemplateId: string | null;
+  emptyMessage: string;
+}) {
   return (
     <div>
       <h3 className="font-semibold text-slate-900 dark:text-white mb-3">{title}</h3>
       <div className="grid xl:grid-cols-3 gap-4">
         {templates.length === 0 ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400">No templates available.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{emptyMessage}</p>
         ) : (
-          templates.map((template) => (
-            <div key={template.id} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
-              <div className="flex justify-between items-start mb-2">
-                <h4 className="font-semibold text-slate-900 dark:text-white">{template.name}</h4>
-                {template.popular && <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-700">Popular</span>}
+          templates.map((template) => {
+            const previewSections =
+              template.sectionHeadings && template.sectionHeadings.length > 0
+                ? template.sectionHeadings.slice(0, 3)
+                : Array.from({ length: Math.min(3, Math.max(1, template.sections)) }, (_, idx) => `Section ${idx + 1}`);
+            const isApplying = activatingTemplateId === template.id;
+            const sourceLabel = template.source === 'custom' ? 'Custom' : 'Prebuilt';
+
+            return (
+              <div key={template.id} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
+                <div className="flex justify-between items-start gap-2">
+                  <h4 className="font-semibold text-slate-900 dark:text-white">{template.name}</h4>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                      {sourceLabel}
+                    </span>
+                    {template.popular && (
+                      <span className="text-[11px] px-2 py-1 rounded-full bg-orange-100 text-orange-700">Popular</span>
+                    )}
+                  </div>
+                </div>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{template.description}</p>
+                <div className="text-xs text-slate-500 dark:text-slate-400 flex justify-between">
+                  <span>{template.sections} sections</span>
+                  <span>{template.lastUsedText}</span>
+                </div>
+                <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 p-2.5">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">Section Preview</p>
+                  <div className="space-y-1">
+                    {previewSections.map((section) => (
+                      <p key={section} className="text-xs text-slate-700 dark:text-slate-300">
+                        • {section}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  onClick={() => void onUseTemplate(template)}
+                  disabled={isApplying}
+                  className="w-full rounded-lg bg-primary-600 text-white py-2 text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-70"
+                >
+                  {isApplying ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                  Use Template
+                </button>
               </div>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{template.description}</p>
-              <div className="text-xs text-slate-500 dark:text-slate-400 flex justify-between">
-                <span>{template.sections} sections</span>
-                <span>{template.lastUsedText}</span>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
@@ -813,7 +904,17 @@ function SettingsView({ user, onLogout }: { user: User; onLogout: () => void }) 
   );
 }
 
-function AppWorkspace({ user, onLogout }: { user: User; onLogout: () => Promise<void> }) {
+function AppWorkspace({
+  user,
+  onLogout,
+  isDark,
+  toggleDark,
+}: {
+  user: User;
+  onLogout: () => Promise<void>;
+  isDark: boolean;
+  toggleDark: () => void;
+}) {
   const [activeView, setActiveView] = useState<ViewKey>('dashboard');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [workspace, setWorkspace] = useState<WorkspaceData | null>(null);
@@ -867,7 +968,10 @@ function AppWorkspace({ user, onLogout }: { user: User; onLogout: () => Promise<
             <Menu className="w-4 h-4" />
           </button>
           <p className="font-semibold text-slate-900 dark:text-white">AutoSOW</p>
-          <span className="w-8" />
+          <ThemeToggle isDark={isDark} toggleDark={toggleDark} />
+        </div>
+        <div className="hidden md:flex h-16 px-6 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur items-center justify-end">
+          <ThemeToggle isDark={isDark} toggleDark={toggleDark} className="border border-slate-200 dark:border-slate-700" />
         </div>
         <main className="p-4 md:p-6 lg:p-8">{viewContent}</main>
       </div>
@@ -927,7 +1031,7 @@ export default function App() {
       <Toaster position="top-center" toastOptions={{ className: isDark ? '!bg-slate-800 !text-white' : '' }} />
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} onLoginSuccess={setUser} />
       {user ? (
-        <AppWorkspace user={user} onLogout={logout} />
+        <AppWorkspace user={user} onLogout={logout} isDark={isDark} toggleDark={() => setIsDark((v) => !v)} />
       ) : (
         <Landing onOpenAuth={() => setIsAuthOpen(true)} isDark={isDark} toggleDark={() => setIsDark((v) => !v)} />
       )}
