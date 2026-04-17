@@ -13,9 +13,9 @@ AutoSOW is an AI-powered platform designed for agencies, consultants, and develo
 - **🤖 Gemini-Powered SOW Generation (Optional):** Uses `GEMINI_API_KEY` (when configured) to generate richer SOW markdown and extract insights. If not configured, AutoSOW uses built-in local text processing.
 - **🔁 Dynamic Workspace Data:** Dashboard, Upload, AI Processing, Generated SOWs, Templates, and Collaboration screens are powered by backend APIs (not hardcoded UI data).
 - **💾 Persistent User Workspace:** User-scoped workspace state is stored locally in backend JSON stores and updated on every action (uploads, template creation, comments, SOW generation).
-- **📄 Template Library + Custom Templates:** Includes starter templates and supports creating custom templates from the UI.
+- **📄 Functional Template System:** Includes prebuilt SOW templates plus custom templates, with one-click template application to instantly create editable SOW drafts.
 - **🛡️ JWT Security:** Robust authentication flow for managing private workspace data and generated documents.
-- **🌓 Adaptive Theme:** Seamless Dark Mode/Light Mode support that mirrors OS preferences.
+- **🌓 Always-Available Theme Toggle:** Switch Dark/Light mode anytime (landing + workspace) with persistent preference.
 
 ---
 
@@ -67,6 +67,11 @@ AutoSOW is an AI-powered platform designed for agencies, consultants, and develo
 
 Your dashboard will be available at `http://localhost:5173`.
 
+### SOW Generation Modes
+
+- **Gemini Mode:** enabled automatically when `GEMINI_API_KEY` is set.
+- **Local Fallback Mode:** used automatically when `GEMINI_API_KEY` is not set.
+
 ---
 
 ## 🔌 Dynamic API Endpoints
@@ -77,6 +82,7 @@ Authenticated endpoints currently used by the frontend:
 - `POST /api/workspace/upload` — create a project from uploaded meeting data
 - `POST /api/sow/generate` — generate SOW + update insights/metrics
 - `POST /api/workspace/templates` — create custom templates
+- `POST /api/workspace/templates/:templateId/use` — apply a template and generate a template-based draft SOW
 - `POST /api/workspace/comments/:commentId/resolve` — resolve collaboration comments
 
 Auth + supporting endpoints:
