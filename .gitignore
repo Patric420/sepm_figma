@@ -18,6 +18,17 @@ backend\users.json
 backend\leads.json
 backend\workspace.json
 
+# Build/test caches
+coverage
+*.tsbuildinfo
+.eslintcache
+
+# Temp files
+*.tmp
+*.temp
+tmp
+temp
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
