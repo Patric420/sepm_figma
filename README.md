@@ -10,7 +10,7 @@ AutoSOW is an AI-powered platform designed for agencies, consultants, and develo
 
 ## ✨ Key Features
 
-- **🤖 Gemini-Powered SOW Generation:** Uses `GEMINI_API_KEY` (when configured) to generate SOW markdown and extract insights (requirements, stakeholders, deliverables, timelines).
+- **🤖 Gemini-Powered SOW Generation (Optional):** Uses `GEMINI_API_KEY` (when configured) to generate richer SOW markdown and extract insights. If not configured, AutoSOW uses built-in local text processing.
 - **🔁 Dynamic Workspace Data:** Dashboard, Upload, AI Processing, Generated SOWs, Templates, and Collaboration screens are powered by backend APIs (not hardcoded UI data).
 - **💾 Persistent User Workspace:** User-scoped workspace state is stored locally in backend JSON stores and updated on every action (uploads, template creation, comments, SOW generation).
 - **📄 Template Library + Custom Templates:** Includes starter templates and supports creating custom templates from the UI.
@@ -53,9 +53,10 @@ AutoSOW is an AI-powered platform designed for agencies, consultants, and develo
    ```bash
    copy .env.example .env
    ```
-   Then set your secrets:
+   Then set your values:
    ```env
-   GEMINI_API_KEY=your_actual_key_here
+   # Optional: leave blank to use local fallback generation
+   GEMINI_API_KEY=
    JWT_SECRET=your_jwt_secret_here
    ```
 
